@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head> 
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+        <title>PHP仿微信多图片预览上传</title>
+
+        <style type="text/css">
+            .btn{-webkit-border-radius:3px;-moz-border-radius:3px;-ms-border-radius:3px;-o-border-radius:3px;border-radius:3px;
+                 background-color: #ff8400;color: #fff;display: inline-block;height: 28px;line-height: 28px;text-align: center;
+                 width: 72px;transition: background-color 0.2s linear 0s;border:none;cursor:pointer;margin:0 0 20px;}
+            .demo{width:660px;margin:120px auto}
+            a{cursor: pointer}
+            .btn:hover{background-color: #e95a00;text-decoration: none}
+            ul,li{list-style: none;padding:0;margin:0}
+            .ul_pics{float:left}
+            /*******图片样式*********/
+            .ul_pics li{float:left;width:120px;height:120px;border:1px solid #ddd;margin:0 5px 10px}  
+            .progress{position:relative;padding: 1px; border-radius:3px; margin:60px 0 0 0;} 
+            .bar {background-color: green; display:block; width:0%; height:20px; border-radius:3px; } 
+            .percent{position:absolute; height:20px; display:inline-block;top:3px; left:2%; color:#fff }
+            .clearfix:after{visibility:hidden; display:block; font-size:0; content:" "; clear:both; height:0}
+            *:first-child+html .clearfix{zoom:1}
+            .img_common{width:100%;height: 100%}
+        </style>
+    </head>
+    <body>
+        <div class="demo clearfix">
+            <ul id="ul_pics" class="ul_pics clearfix">
+                <li><img src="logo.png" id="btn" class="img_common" /></li>
+            </ul>
+        </div>
+        <script type="text/javascript" src="jquery.js"></script>
+        <script type="text/javascript" src="plupload/plupload.full.min.js"></script>
+        <script type="text/javascript">
+            var uploader = new plupload.Uploader({//创建实例的构造方法
+                runtimes: 'html5,flash,silverlight,html4', //上传插件初始化选用那种方式的优先级顺序
+                browse_button: 'btn', // 上传按钮
+                url: "ajax.php", //远程上传地址
+                flash_swf_url: 'plupload/Moxie.swf', //flash文件地址
+                silverlight_xap_url: 'plupload/Moxie.xap', //silverlight文件地址
+                filters: {
+                    max_file_size: '10mb', //最大上传文件大小（格式100b, 10kb, 10mb, 1gb）
+                    mime_types: [//允许文件上传类型
+                        {title: "files", extensions: "jpg,png,gif,jpeg"}
+                    ]
+                },
+                multi_selection: true, //true:ctrl多文件上传, false 单文件上传
+                init: {
+                    FilesAdded: function(up, files) { //文件上传前
+                        if ($("#ul_pics").children("li").length > 30) {
+                            alert("您上传的图片太多了！");
+                            uploader.destroy();
+                        } else {
+                            var li = '';
+                            plupload.each(files, function(file) { //遍历文件
+                                li += "<li id='" + file['id'] + "'><div class='progress'><span class='bar'></span><span class='percent'>0%</span></div></li>";
+                            });
+                            $("#ul_pics").prepend(li);
+                            uploader.start();
+                        }
+                    },
+                    UploadProgress: function(up, file) { //上传中，显示进度条
+                        var percent = file.percent;
+                        $("#" + file.id).find('.bar').css({"width": percent + "%"});
+                        $("#" + file.id).find(".percent").text(percent + "%");
+                    },
+                    FileUploaded: function(up, file, info) { //文件上传成功的时候触发
+                        var data = eval("(" + info.response + ")");//解析返回的json数据
+                        $("#" + file.id).html("<input type='hidden'name='pic[]' value='" + data.pic + "'/><input type='hidden'name='pic_name[]' value='" + data.name + "'/><img class='img_common' onclick=delPic('" + data.pic + "','" + file.id + "') src='" + data.pic + "'/>");//追加图片
+                    },
+                    Error: function(up, err) { //上传出错的时候触发
+                        alert(err.message);
+                    }
+                }
+            });
+            uploader.init();
+
+            function delPic(pic, file_id) { //删除图片 参数1图片路径  参数2 随机数
+                if (confirm("确定要删除吗？")) {
+                    $.post("del.php", {pic: pic}, function(data) {
+                        $("#" + file_id).remove()
+                    })
+                }
+            }
+        </script>
+    </body>
+</html>
+
+
+<!-- 以下是统计及其他信息，与演示无关，不必理会 -->
+
+<p class="vad">
+    <a href="http://www.erdangjiade.com/" target="_blank">erdangjiade.com</a>
+    <a href="http://www.erdangjiade.com/js/830.html" target="_blank">说 明</a>
+    <a href="http://www.erdangjiade.com/js/830.html" target="_blank">下 载</a>
+</p>
+<style type="text/css">
+    .vad { margin: 120px 0 5px; font-family: Consolas,arial,宋体,sans-serif; text-align:center;}
+    .vad a { display: inline-block; height: 36px; line-height: 36px; margin: 0 5px; padding: 0 50px; font-size: 14px; text-align:center; color:#eee; text-decoration: none; background-color: #222;}
+    .vad a:hover { color: #fff; background-color: #000;}
+    .thead { width: 728px; height: 90px; margin: 0 auto; border-bottom: 40px solid #fff;}
+</style>
